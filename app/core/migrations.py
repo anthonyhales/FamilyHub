@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+
 MIGRATIONS_DIR = os.path.join(os.path.dirname(__file__), "..", "migrations")
 
 
@@ -35,7 +36,10 @@ def run_migrations(db: Session):
         with open(path, "r", encoding="utf-8") as f:
             sql = f.read()
 
-        db.execute(text(sql))
+        # 🔧 SQLite requires executescript for multi-statement SQL
+        conn = db.connection().connection
+        conn.executescript(sql)
+
         db.execute(
             text("""
                 INSERT INTO schema_migrations (version, name, applied_at)
@@ -48,6 +52,7 @@ def run_migrations(db: Session):
             },
         )
         db.commit()
+
         print(f"[MIGRATION] Applied {filename}")
 
     if not files or len(applied) == len(files):
