@@ -22,13 +22,14 @@
       <div class="sidebar-brand-text mx-3">{{ settings.app_name }}</div>
     </a>
 
+    <hr class="sidebar-divider">
     <hr class="sidebar-divider my-0">
 
     <li class="nav-item {% if active_nav=='dashboard' %}active{% endif %}">
       <a class="nav-link" href="/dashboard"><i class="fas fa-fw fa-tachometer-alt"></i> <span>Dashboard</span></a>
     </li>
 
-    <hr class="sidebar-divider">
+   <div class="sidebar-heading">HUB</div>
 
     <li class="nav-item {% if active_nav=='calendar' %}active{% endif %}">
       <a class="nav-link" href="/calendar"><i class="fas fa-fw fa-calendar"></i> <span>Calendar</span></a>
@@ -39,15 +40,28 @@
     <li class="nav-item {% if active_nav=='mealplan' %}active{% endif %}">
       <a class="nav-link" href="/mealplan"><i class="fas fa-fw fa-utensils"></i> <span>Meal plan</span></a>
     </li>
-
-    <hr class="sidebar-divider">
+     <li class="nav-item {% if active_nav=='shopping' %}active{% endif %}">
+      <a class="nav-link" href="/shopping"><i class="fas fa-fw fa-utensils"></i> <span>Shopping Lists</span></a>
+    </li>
+     <li class="nav-item {% if active_nav=='school' %}active{% endif %}">
+      <a class="nav-link" href="/school"><i class="fas fa-fw fa-utensils"></i> <span>School Activities</span></a>
+    </li>
 
     {% if user.is_admin %}
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading">ADMIN</div>
+
     <li class="nav-item {% if active_nav=='admin' %}active{% endif %}">
       <a class="nav-link" href="/admin/users"><i class="fas fa-fw fa-users-cog"></i> <span>Users</span></a>
     </li>
-    <li class="nav-item">
+    <li class="nav-item {% if active_nav=='admin' %}active{% endif %}">
       <a class="nav-link" href="/admin/activity"><i class="fas fa-fw fa-users-cog"></i><span>Activity Log</span></a>
+    </li>
+    <li class="nav-item {% if active_nav=='admin' %}active{% endif %}">
+      <a class="nav-link" href="/admin/settings"><i class="fas fa-fw fa-users-cog"></i><span>Settings</span></a>
+    </li>
+    <li class="nav-item {% if active_nav=='admin' %}active{% endif %}">
+      <a class="nav-link" href="/admin/updates"><i class="fas fa-fw fa-users-cog"></i><span>Activity Log</span></a>
     </li>
 
     {% endif %}
