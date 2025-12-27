@@ -11,6 +11,7 @@ from .core.db import engine, SessionLocal
 from .core.security import hash_password
 from . import models, crud
 from .routes import auth, dashboard, calendar, chores, mealplan, admin
+from app.core.migrations import run_migrations
 
 
 def create_app() -> FastAPI:
@@ -40,7 +41,14 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def _startup():
+        # Run additive migrations first
+        with SessionLocal() as db:
+            run_migrations(db)
+
+        # Ensure base tables exist (safe, idempotent)
         models.Base.metadata.create_all(bind=engine)
+
+        # Ensure bootstrap admin user exists
         _ensure_bootstrap_admin()
 
     return app
