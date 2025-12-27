@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set title = "Meal plan" %}
+{% set active_nav = "mealplan" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0">Meal plan</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/mealplan?week={{ (start - timedelta(days=7)).isoformat() }}">Prev</a>
+    <a class="btn btn-outline-secondary" href="/mealplan">This week</a>
+    <a class="btn btn-outline-secondary" href="/mealplan?week={{ (start + timedelta(days=7)).isoformat() }}">Next</a>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead>
+          <tr>
+            <th style="width: 120px;">Slot</th>
+            {% for d in days %}
+              <th>{{ d.strftime('%a %d %b') }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for slot in slots %}
+            <tr>
+              <th class="text-muted text-capitalize">{{ slot }}</th>
+              {% for d in days %}
+                {% set entry = by_key.get((d, slot)) %}
+                <td>
+                  {% if entry %}
+                    <div class="fw-semibold">{{ entry.title }}</div>
+                    {% if entry.notes %}<div class="text-muted small">{{ entry.notes }}</div>{% endif %}
+                    <form method="post" action="/mealplan/{{ entry.id }}/delete" class="mt-2">
+                      <input type="hidden" name="csrf" value="{{ csrf }}">
+                      <input type="hidden" name="week" value="{{ start.isoformat() }}">
+                      <button class="btn btn-sm btn-outline-danger" type="submit">Remove</button>
+                    </form>
+                  {% else %}
+                    <form method="post" action="/mealplan/set">
+                      <input type="hidden" name="csrf" value="{{ csrf }}">
+                      <input type="hidden" name="week" value="{{ start.isoformat() }}">
+                      <input type="hidden" name="meal_date" value="{{ d.isoformat() }}">
+                      <input type="hidden" name="meal_slot" value="{{ slot }}">
+                      <div class="mb-2">
+                        <input class="form-control form-control-sm" name="title" placeholder="Meal..." required>
+                      </div>
+                      <div class="mb-2">
+                        <input class="form-control form-control-sm" name="notes" placeholder="Notes (optional)">
+                      </div>
+                      <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                    </form>
+                  {% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

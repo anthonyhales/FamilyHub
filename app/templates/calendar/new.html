@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% set title = "Add event" %}
+{% set active_nav = "calendar" %}
+{% block content %}
+<h1 class="h3 mb-3">Add event</h1>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post" action="/calendar/new">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input class="form-control" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Start</label>
+            <input class="form-control" type="datetime-local" name="start_at" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">End (optional)</label>
+            <input class="form-control" type="datetime-local" name="end_at">
+          </div>
+          <button class="btn btn-primary" type="submit">Save</button>
+          <a class="btn btn-link" href="/calendar">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

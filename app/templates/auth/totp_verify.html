@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set title = "Enable two-factor authentication" %}
+{% block content %}
+<h1 class="h3 mb-3">Enable two-factor authentication</h1>
+
+{% if not totp_uri %}
+  <div class="alert alert-warning">No setup is in progress. Go back to <a href="/account">Account</a>.</div>
+{% else %}
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <ol class="mb-3">
+            <li>Add an account in your authenticator app.</li>
+            <li>Scan the QR code (or use the setup link below).</li>
+            <li>Enter the 6-digit code to confirm.</li>
+          </ol>
+
+          <div class="mb-3">
+            <label class="form-label">Setup link</label>
+            <input class="form-control" value="{{ totp_uri }}" readonly>
+            <div class="form-text">Most apps work best with the QR code; the link is a fallback.</div>
+          </div>
+
+          <div class="mb-3">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ totp_uri|urlencode }}" alt="QR code">
+          </div>
+
+          <form method="post" action="/account/totp/verify">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <div class="mb-3">
+              <label class="form-label">6-digit code</label>
+              <input class="form-control" type="text" name="code" inputmode="numeric" required>
+            </div>
+            <button class="btn btn-primary" type="submit">Confirm and enable</button>
+            <a class="btn btn-link" href="/account">Cancel</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

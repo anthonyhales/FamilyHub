@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set title = "Calendar" %}
+{% set active_nav = "calendar" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0">Calendar</h1>
+  <a class="btn btn-primary" href="/calendar/new">Add event</a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    {% if not events %}
+      <div class="text-muted">No events found.</div>
+    {% else %}
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>When</th>
+              <th>Title</th>
+              <th class="text-end"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in events %}
+            <tr>
+              <td class="text-muted">{{ e.start_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                <div class="fw-semibold">{{ e.title }}</div>
+                {% if e.description %}<div class="text-muted small">{{ e.description }}</div>{% endif %}
+              </td>
+              <td class="text-end">
+                <form method="post" action="/calendar/{{ e.id }}/delete" onsubmit="return confirm('Delete this event?');">
+                  <input type="hidden" name="csrf" value="{{ csrf }}">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% set title = "Chores" %}
+{% set active_nav = "chores" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0">Chores</h1>
+</div>
+
+<div class="row">
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Current chores</div>
+      <div class="card-body">
+        {% if not chores %}
+          <div class="text-muted">No chores yet.</div>
+        {% else %}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Assigned</th>
+                  <th>Every</th>
+                  <th>Last done</th>
+                  <th>Due</th>
+                  <th class="text-end"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in chores %}
+                  <tr>
+                    <td>
+                      <div class="fw-semibold">{{ item.chore.name }}</div>
+                      {% if item.chore.description %}<div class="text-muted small">{{ item.chore.description }}</div>{% endif %}
+                    </td>
+                    <td class="text-muted">
+                      {% set assignee = (users|selectattr('id','equalto',item.chore.assigned_to_user_id)|list|first) %}
+                      {{ assignee.display_name if assignee else "-" }}
+                    </td>
+                    <td class="text-muted">{{ item.chore.every_n_days }}d</td>
+                    <td class="text-muted">{{ item.last_done if item.last_done else "never" }}</td>
+                    <td>
+                      {% if item.due %}
+                        <span class="badge bg-warning text-dark">Due</span>
+                      {% else %}
+                        <span class="badge bg-success">OK</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end d-flex gap-2 justify-content-end">
+                      <form method="post" action="/chores/{{ item.chore.id }}/complete">
+                        <input type="hidden" name="csrf" value="{{ csrf }}">
+                        <button class="btn btn-sm btn-success" type="submit">Done</button>
+                      </form>
+                      <form method="post" action="/chores/{{ item.chore.id }}/delete" onsubmit="return confirm('Delete this chore?');">
+                        <input type="hidden" name="csrf" value="{{ csrf }}">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Add a chore</div>
+      <div class="card-body">
+        <form method="post" action="/chores/new">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input class="form-control" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Repeat every N days</label>
+            <input class="form-control" type="number" name="every_n_days" value="7" min="0">
+            <div class="form-text">Set 0 for non-recurring.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assign to (optional)</label>
+            <select class="form-select" name="assigned_to_user_id">
+              <option value="">Unassigned</option>
+              {% for u in users %}
+                <option value="{{ u.id }}">{{ u.display_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-primary" type="submit">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

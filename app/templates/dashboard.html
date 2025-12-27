@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% set title = "Dashboard" %}
+{% set active_nav = "dashboard" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0">Dashboard</h1>
+</div>
+
+<div class="row">
+  <div class="col-lg-4 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span>Upcoming events</span>
+        <a class="btn btn-sm btn-outline-primary" href="/calendar/new">Add</a>
+      </div>
+      <div class="card-body">
+        {% if not upcoming %}
+          <div class="text-muted">Nothing coming up.</div>
+        {% else %}
+          <ul class="list-group list-group-flush">
+            {% for e in upcoming %}
+              <li class="list-group-item px-0">
+                <div class="fw-semibold">{{ e.title }}</div>
+                <div class="text-muted small">{{ e.start_at.strftime('%Y-%m-%d %H:%M') }}</div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span>Chores due</span>
+        <a class="btn btn-sm btn-outline-primary" href="/chores">Manage</a>
+      </div>
+      <div class="card-body">
+        {% set due = chore_cards|selectattr('due')|list %}
+        {% if not due %}
+          <div class="text-muted">All caught up.</div>
+        {% else %}
+          <ul class="list-group list-group-flush">
+            {% for item in due[:6] %}
+              <li class="list-group-item px-0 d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="fw-semibold">{{ item.chore.name }}</div>
+                  <div class="text-muted small">Last done: {{ item.last_done if item.last_done else 'never' }}</div>
+                </div>
+                <form method="post" action="/chores/{{ item.chore.id }}/complete">
+                  <input type="hidden" name="csrf" value="{{ csrf }}">
+                  <button class="btn btn-sm btn-success" type="submit">Done</button>
+                </form>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <span>This week meals</span>
+        <a class="btn btn-sm btn-outline-primary" href="/mealplan">View</a>
+      </div>
+      <div class="card-body">
+        {% if not meals %}
+          <div class="text-muted">No meals planned yet.</div>
+        {% else %}
+          <ul class="list-group list-group-flush">
+            {% for m in meals[:10] %}
+              <li class="list-group-item px-0">
+                <div class="fw-semibold">{{ m.title }}</div>
+                <div class="text-muted small">{{ m.meal_date }} · {{ m.meal_slot }}</div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

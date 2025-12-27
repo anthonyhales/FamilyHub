@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% set title = "Users" %}
+{% set active_nav = "admin" %}
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h1 class="h3 mb-0">Users</h1>
+</div>
+
+<div class="row">
+  <div class="col-lg-7 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Household users</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Admin</th>
+                <th>Status</th>
+                <th class="text-end"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in users %}
+                <tr>
+                  <td class="fw-semibold">{{ u.display_name }}</td>
+                  <td class="text-muted">{{ u.email }}</td>
+                  <td>
+                    {% if u.is_admin %}<span class="badge bg-primary">Admin</span>{% else %}-{% endif %}
+                  </td>
+                  <td>
+                    {% if u.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Disabled</span>{% endif %}
+                  </td>
+                  <td class="text-end d-flex gap-2 justify-content-end">
+                    <form method="post" action="/admin/users/{{ u.id }}/toggle_admin">
+                      <input type="hidden" name="csrf" value="{{ csrf }}">
+                      <button class="btn btn-sm btn-outline-primary" type="submit">Toggle admin</button>
+                    </form>
+                    <form method="post" action="/admin/users/{{ u.id }}/toggle_active">
+                      <input type="hidden" name="csrf" value="{{ csrf }}">
+                      <button class="btn btn-sm btn-outline-secondary" type="submit">Toggle active</button>
+                    </form>
+                    <button class="btn btn-sm btn-outline-dark" type="button" data-bs-toggle="collapse" data-bs-target="#pw{{ u.id }}">Reset password</button>
+                  </td>
+                </tr>
+                <tr class="collapse" id="pw{{ u.id }}">
+                  <td colspan="5">
+                    <form method="post" action="/admin/users/{{ u.id }}/password" class="d-flex gap-2 align-items-center">
+                      <input type="hidden" name="csrf" value="{{ csrf }}">
+                      <input class="form-control form-control-sm" type="password" name="password" placeholder="New password" required>
+                      <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="text-muted small">Tip: you can't remove your own admin access or disable yourself.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5 mb-4">
+    <div class="card shadow-sm">
+      <div class="card-header">Create user</div>
+      <div class="card-body">
+        <form method="post" action="/admin/users/create">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Display name</label>
+            <input class="form-control" name="display_name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Initial password</label>
+            <input class="form-control" type="password" name="password" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" value="1" id="is_admin" name="is_admin">
+            <label class="form-check-label" for="is_admin">Admin</label>
+          </div>
+          <button class="btn btn-primary" type="submit">Create</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

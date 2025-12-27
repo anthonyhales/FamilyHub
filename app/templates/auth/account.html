@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% set title = "Account" %}
+{% set active_nav = "account" %}
+{% block content %}
+<h1 class="h3 mb-3">Account</h1>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h2 class="h5">Two-factor authentication (TOTP)</h2>
+        {% if user.totp_enabled %}
+          <p class="text-muted mb-3">TOTP is enabled on your account.</p>
+          <form method="post" action="/account/totp/disable">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button class="btn btn-outline-danger" type="submit">Disable</button>
+          </form>
+        {% else %}
+          <p class="text-muted mb-3">Add an extra layer of security by requiring an authenticator code at login.</p>
+          <form method="post" action="/account/totp/start">
+            <input type="hidden" name="csrf" value="{{ csrf }}">
+            <button class="btn btn-primary" type="submit">Enable</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
