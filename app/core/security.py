@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone  # you can remove timezone if you want
 
 import pyotp
 from passlib.context import CryptContext
@@ -20,7 +20,7 @@ def new_token(nbytes: int = 32) -> str:
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.utcnow()
 
 
 def expires_in(minutes: int) -> datetime:
@@ -36,5 +36,4 @@ def totp_provisioning_uri(email: str, secret: str, issuer: str = "FamilyHub") ->
 
 
 def totp_verify(code: str, secret: str) -> bool:
-    # Allow small clock drift (1 step)
     return pyotp.TOTP(secret).verify(code.replace(" ", ""), valid_window=1)
