@@ -14,10 +14,28 @@ from ._render import templates, ctx
 router = APIRouter(tags=["auth"])
 
 
+def _set_csrf_cookie_if_needed(request: Request, resp):
+    """
+    If get_or_set_csrf() generated a new token, it's stored on request.state.set_csrf.
+    We must write it to a cookie on the response (GET pages), otherwise POST will 400.
+    """
+    token = getattr(request.state, "set_csrf", None)
+    if token:
+        resp.set_cookie(
+            settings.csrf_cookie,
+            token,
+            httponly=False,
+            samesite="lax",
+            secure=False,  # rely on TLS at reverse proxy
+        )
+    return resp
+
+
 @router.get("/login", include_in_schema=False)
 def login_page(request: Request):
     csrf = get_or_set_csrf(request)
-    return templates.TemplateResponse("auth/login.html", ctx(request, csrf=csrf))
+    resp = templates.TemplateResponse("auth/login.html", ctx(request, csrf=csrf))
+    return _set_csrf_cookie_if_needed(request, resp)
 
 
 @router.post("/login", include_in_schema=False)
@@ -50,9 +68,16 @@ def login_post(
         secure=False,  # rely on TLS at reverse proxy
         max_age=settings.session_ttl_minutes * 60,
     )
-    # Ensure CSRF cookie exists
+
+    # Keep this (harmless) in case a CSRF cookie is ever generated during this request.
     if getattr(request.state, "set_csrf", None):
-        resp.set_cookie(settings.csrf_cookie, request.state.set_csrf, httponly=False, samesite="lax", secure=False)
+        resp.set_cookie(
+            settings.csrf_cookie,
+            request.state.set_csrf,
+            httponly=False,
+            samesite="lax",
+            secure=False,
+        )
     return resp
 
 
@@ -61,7 +86,8 @@ def mfa_page(request: Request):
     csrf = get_or_set_csrf(request)
     if not request.session.get("pending_user_id"):
         return RedirectResponse("/login", status_code=302)
-    return templates.TemplateResponse("auth/mfa.html", ctx(request, csrf=csrf))
+    resp = templates.TemplateResponse("auth/mfa.html", ctx(request, csrf=csrf))
+    return _set_csrf_cookie_if_needed(request, resp)
 
 
 @router.post("/mfa", include_in_schema=False)
@@ -122,10 +148,8 @@ def account_page(
     user: models.User = Depends(get_current_user),
 ):
     csrf = get_or_set_csrf(request)
-    return templates.TemplateResponse(
-        "auth/account.html",
-        ctx(request, csrf=csrf, totp_uri=None),
-    )
+    resp = templates.TemplateResponse("auth/account.html", ctx(request, csrf=csrf, totp_uri=None))
+    return _set_csrf_cookie_if_needed(request, resp)
 
 
 @router.post("/account/totp/start", include_in_schema=False)
@@ -149,7 +173,8 @@ def totp_verify_page(
     csrf = get_or_set_csrf(request)
     secret = request.session.get("totp_secret_pending")
     totp_uri = totp_provisioning_uri(user.email, secret, issuer=settings.app_name) if secret else None
-    return templates.TemplateResponse("auth/totp_verify.html", ctx(request, csrf=csrf, totp_uri=totp_uri))
+    resp = templates.TemplateResponse("auth/totp_verify.html", ctx(request, csrf=csrf, totp_uri=totp_uri))
+    return _set_csrf_cookie_if_needed(request, resp)
 
 
 @router.post("/account/totp/verify", include_in_schema=False)
