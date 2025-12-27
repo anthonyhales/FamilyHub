@@ -10,7 +10,8 @@ from ..core.security import totp_generate_secret, totp_provisioning_uri, totp_ve
 from ..deps import get_or_set_csrf, validate_csrf, get_current_user
 from .. import crud, models
 from ._render import templates, ctx
-from app.core.activity import log_activity
+from ..core.activity import log_activity
+
 
 router = APIRouter(tags=["auth"])
 
