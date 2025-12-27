@@ -12,6 +12,8 @@ from .core.security import hash_password
 from . import models, crud
 from .routes import auth, dashboard, calendar, chores, mealplan, admin
 from app.core.migrations import run_migrations
+from .routes import admin_activity
+
 
 
 def create_app() -> FastAPI:
@@ -34,6 +36,8 @@ def create_app() -> FastAPI:
     app.include_router(chores.router)
     app.include_router(mealplan.router)
     app.include_router(admin.router)
+    app.include_router(admin_activity.router)
+
 
     @app.get("/", include_in_schema=False)
     def root():

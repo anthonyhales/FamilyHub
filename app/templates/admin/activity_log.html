@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% set title = "Activity Log" %}
+
+{% block content %}
+<h1 class="h3 mb-4">Activity Log</h1>
+
+<div class="card">
+  <div class="card-body table-responsive">
+    <table class="table table-sm table-striped">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>User</th>
+          <th>Action</th>
+          <th>Entity</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.timestamp }}</td>
+          <td>{{ r.actor_email or "system" }}</td>
+          <td><code>{{ r.action }}</code></td>
+          <td>
+            {% if r.entity_type %}
+              {{ r.entity_type }} {{ r.entity_id }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            {% if r.details %}
+              <pre class="mb-0 small">{{ r.details }}</pre>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

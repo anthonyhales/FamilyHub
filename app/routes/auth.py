@@ -10,15 +10,12 @@ from ..core.security import totp_generate_secret, totp_provisioning_uri, totp_ve
 from ..deps import get_or_set_csrf, validate_csrf, get_current_user
 from .. import crud, models
 from ._render import templates, ctx
+from app.core.activity import log_activity
 
 router = APIRouter(tags=["auth"])
 
 
 def _set_csrf_cookie_if_needed(request: Request, resp):
-    """
-    If get_or_set_csrf() generated a new token, it's stored on request.state.set_csrf.
-    We must write it to a cookie on the response (GET pages), otherwise POST will 400.
-    """
     token = getattr(request.state, "set_csrf", None)
     if token:
         resp.set_cookie(
@@ -26,7 +23,7 @@ def _set_csrf_cookie_if_needed(request: Request, resp):
             token,
             httponly=False,
             samesite="lax",
-            secure=False,  # rely on TLS at reverse proxy
+            secure=False,
         )
     return resp
 
@@ -50,11 +47,23 @@ def login_post(
 
     user = crud.authenticate_user(db, email, password)
     if not user:
+        log_activity(
+            db,
+            request=request,
+            action="auth.login.failed",
+            details={"email": email},
+        )
         request.session["flash"] = {"type": "danger", "message": "Invalid email or password."}
         return RedirectResponse("/login", status_code=302)
 
-    # If TOTP enabled, require MFA step
     if user.totp_enabled and user.totp_secret:
+        log_activity(
+            db,
+            request=request,
+            action="auth.login.mfa_required",
+            entity_type="user",
+            entity_id=user.id,
+        )
         request.session["pending_user_id"] = user.id
         return RedirectResponse("/mfa", status_code=302)
 
@@ -65,11 +74,18 @@ def login_post(
         sess.token,
         httponly=True,
         samesite="lax",
-        secure=False,  # rely on TLS at reverse proxy
+        secure=False,
         max_age=settings.session_ttl_minutes * 60,
     )
 
-    # Keep this (harmless) in case a CSRF cookie is ever generated during this request.
+    log_activity(
+        db,
+        request=request,
+        action="auth.login.success",
+        entity_type="user",
+        entity_id=user.id,
+    )
+
     if getattr(request.state, "set_csrf", None):
         resp.set_cookie(
             settings.csrf_cookie,
@@ -108,8 +124,23 @@ def mfa_post(
         return RedirectResponse("/login", status_code=302)
 
     if not totp_verify(code, user.totp_secret):
+        log_activity(
+            db,
+            request=request,
+            action="auth.mfa.failed",
+            entity_type="user",
+            entity_id=user.id,
+        )
         request.session["flash"] = {"type": "danger", "message": "Invalid code. Try again."}
         return RedirectResponse("/mfa", status_code=302)
+
+    log_activity(
+        db,
+        request=request,
+        action="auth.mfa.success",
+        entity_type="user",
+        entity_id=user.id,
+    )
 
     request.session.pop("pending_user_id", None)
     sess = crud.create_session(db, user, settings.session_ttl_minutes)
@@ -137,6 +168,15 @@ def logout(
     token = request.cookies.get(settings.session_cookie)
     if token:
         crud.delete_session(db, token)
+
+    log_activity(
+        db,
+        request=request,
+        action="auth.logout",
+        entity_type="user",
+        entity_id=request.state.user.id if hasattr(request.state, "user") else None,
+    )
+
     resp = RedirectResponse("/login", status_code=302)
     resp.delete_cookie(settings.session_cookie)
     return resp
@@ -195,6 +235,15 @@ def totp_verify_post(
         return RedirectResponse("/account/totp/verify", status_code=302)
 
     crud.enable_totp(db, user, secret)
+
+    log_activity(
+        db,
+        request=request,
+        action="auth.mfa.enabled",
+        entity_type="user",
+        entity_id=user.id,
+    )
+
     request.session.pop("totp_secret_pending", None)
     request.session["flash"] = {"type": "success", "message": "Two-factor authentication enabled."}
     return RedirectResponse("/account", status_code=302)
@@ -209,5 +258,14 @@ def totp_disable(
 ):
     validate_csrf(request, csrf)
     crud.disable_totp(db, user)
+
+    log_activity(
+        db,
+        request=request,
+        action="auth.mfa.disabled",
+        entity_type="user",
+        entity_id=user.id,
+    )
+
     request.session["flash"] = {"type": "success", "message": "Two-factor authentication disabled."}
     return RedirectResponse("/account", status_code=302)

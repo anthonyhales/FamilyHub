@@ -8,6 +8,8 @@ from ..core.db import get_db
 from ..deps import require_admin, get_or_set_csrf, validate_csrf
 from .. import crud, models
 from ._render import templates, ctx
+from app.core.activity import log_activity
+
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 

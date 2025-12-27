@@ -9,6 +9,8 @@ from ..core.db import get_db
 from ..deps import get_current_user, get_or_set_csrf
 from .. import crud, models
 from ._render import templates, ctx
+from app.core.activity import log_activity
+
 
 router = APIRouter(tags=["dashboard"])
 
