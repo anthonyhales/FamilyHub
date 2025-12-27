@@ -29,7 +29,7 @@
       <a class="nav-link" href="/dashboard"><i class="fas fa-fw fa-tachometer-alt"></i> <span>Dashboard</span></a>
     </li>
 
-   <div class="sidebar-heading">HUB</div>
+   <div class="sidebar-heading">THE HUB</div>
 
     <li class="nav-item {% if active_nav=='calendar' %}active{% endif %}">
       <a class="nav-link" href="/calendar"><i class="fas fa-fw fa-calendar"></i> <span>Calendar</span></a>
@@ -49,7 +49,7 @@
 
     {% if user.is_admin %}
     <hr class="sidebar-divider">
-    <div class="sidebar-heading">ADMIN</div>
+    <div class="sidebar-heading">ADMINISTRATION</div>
 
     <li class="nav-item {% if active_nav=='users' %}active{% endif %}">
       <a class="nav-link" href="/admin/users"><i class="fas fa-fw fa-users-cog"></i> <span>Users</span></a>
@@ -61,7 +61,7 @@
       <a class="nav-link" href="/admin/settings"><i class="fas fa-fw fa-users-cog"></i><span>Settings</span></a>
     </li>
     <li class="nav-item {% if active_nav=='updates' %}active{% endif %}">
-      <a class="nav-link" href="/admin/updates"><i class="fas fa-fw fa-users-cog"></i><span>Activity Log</span></a>
+      <a class="nav-link" href="/admin/updates"><i class="fas fa-fw fa-users-cog"></i><span>Update Management</span></a>
     </li>
 
     {% endif %}
