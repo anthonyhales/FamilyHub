@@ -14,6 +14,10 @@ from ._render import templates, ctx
 router = APIRouter(tags=["shopping"])
 
 
+# -------------------------
+# Helpers
+# -------------------------
+
 def _set_csrf_cookie_if_needed(request: Request, resp):
     token = getattr(request.state, "set_csrf", None)
     if token:
@@ -24,10 +28,12 @@ def _set_csrf_cookie_if_needed(request: Request, resp):
             samesite="lax",
             secure=False,
         )
-    return _set_csrf_cookie_if_needed(request, resp)
     return resp
 
 
+# -------------------------
+# Shopping home
+# -------------------------
 
 @router.get("/shopping", include_in_schema=False)
 def shopping_home(
@@ -36,10 +42,10 @@ def shopping_home(
     user: models.User = Depends(get_current_user),
 ):
     csrf = get_or_set_csrf(request)
+
     shops = crud.list_shops(db, user.household_id)
     lists = crud.list_lists(db, user.household_id, include_archived=False)
 
-    # add open item counts for display
     list_rows = []
     for lst in lists:
         list_rows.append(
@@ -47,7 +53,7 @@ def shopping_home(
                 "id": lst.id,
                 "name": lst.name,
                 "shop_id": lst.shop_id,
-                "shop_name": lst.shop.name if getattr(lst, "shop", None) else "",
+                "shop_name": lst.shop.name if lst.shop else "",
                 "created_at": lst.created_at,
                 "open_count": crud.count_open_items(db, lst.id),
             }
@@ -57,7 +63,12 @@ def shopping_home(
         "shopping/index.html",
         ctx(request, csrf=csrf, shops=shops, lists=list_rows),
     )
+    return _set_csrf_cookie_if_needed(request, resp)
 
+
+# -------------------------
+# Shops
+# -------------------------
 
 @router.post("/shopping/shop/create", include_in_schema=False)
 def shopping_create_shop(
@@ -68,6 +79,7 @@ def shopping_create_shop(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     shop = crud.create_shop(db, user.household_id, name=name)
 
     log_activity(
@@ -79,9 +91,13 @@ def shopping_create_shop(
         details={"name": shop.name},
     )
 
-    request.session["flash"] = {"type": "success", "message": "Shop added."}
+    request.session["flash"] = {"type": "success", "message": "Shop added"}
     return RedirectResponse("/shopping", status_code=302)
 
+
+# -------------------------
+# Lists
+# -------------------------
 
 @router.post("/shopping/list/create", include_in_schema=False)
 def shopping_create_list(
@@ -93,7 +109,13 @@ def shopping_create_list(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
-    lst = crud.create_list(db, user.household_id, shop_id=int(shop_id), name=name)
+
+    lst = crud.create_list(
+        db,
+        household_id=user.household_id,
+        shop_id=shop_id,
+        name=name,
+    )
 
     log_activity(
         db,
@@ -104,7 +126,6 @@ def shopping_create_list(
         details={"name": lst.name, "shop_id": lst.shop_id},
     )
 
-    request.session["flash"] = {"type": "success", "message": "List created."}
     return RedirectResponse(f"/shopping/{lst.id}", status_code=302)
 
 
@@ -124,18 +145,28 @@ def shopping_list_page(
     items = crud.list_items(db, list_id)
     categories = crud.list_categories(db, user.household_id)
 
-    # group by category for display
-    by_cat: dict[str, list[models.ShoppingItem]] = {}
-    for it in items:
-        label = (it.category.name if it.category else "Uncategorised")
-        by_cat.setdefault(label, []).append(it)
+    by_cat = {}
+    for item in items:
+        label = item.category.name if item.category else "Uncategorised"
+        by_cat.setdefault(label, []).append(item)
 
     resp = templates.TemplateResponse(
         "shopping/list.html",
-        ctx(request, csrf=csrf, lst=lst, items=items, categories=categories, by_cat=by_cat),
+        ctx(
+            request,
+            csrf=csrf,
+            lst=lst,
+            items=items,
+            categories=categories,
+            by_cat=by_cat,
+        ),
     )
     return _set_csrf_cookie_if_needed(request, resp)
 
+
+# -------------------------
+# Items
+# -------------------------
 
 @router.post("/shopping/{list_id}/item/add", include_in_schema=False)
 def shopping_add_item(
@@ -154,8 +185,15 @@ def shopping_add_item(
     if not lst or lst.household_id != user.household_id:
         return RedirectResponse("/shopping", status_code=302)
 
-    cat_id = int(category_id) if str(category_id).strip() else None
-    item = crud.add_item(db, list_id=list_id, name=name, quantity=quantity, category_id=cat_id)
+    cat_id = int(category_id) if category_id.strip() else None
+
+    item = crud.add_item(
+        db,
+        list_id=list_id,
+        name=name,
+        quantity=quantity,
+        category_id=cat_id,
+    )
 
     log_activity(
         db,
@@ -163,7 +201,7 @@ def shopping_add_item(
         action="shopping.item.added",
         entity_type="shopping_item",
         entity_id=item.id,
-        details={"list_id": list_id, "name": item.name, "qty": item.quantity, "category_id": item.category_id},
+        details={"name": item.name, "qty": item.quantity},
     )
 
     return RedirectResponse(f"/shopping/{list_id}", status_code=302)
@@ -178,6 +216,7 @@ def shopping_toggle_item(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     item = crud.get_item(db, item_id)
     if not item:
         return RedirectResponse("/shopping", status_code=302)
@@ -194,7 +233,7 @@ def shopping_toggle_item(
         action="shopping.item.toggled",
         entity_type="shopping_item",
         entity_id=item.id,
-        details={"list_id": item.list_id, "checked": bool(item.is_checked)},
+        details={"checked": bool(item.is_checked)},
     )
 
     return RedirectResponse(f"/shopping/{item.list_id}", status_code=302)
@@ -209,6 +248,7 @@ def shopping_delete_item(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     item = crud.get_item(db, item_id)
     if not item:
         return RedirectResponse("/shopping", status_code=302)
@@ -218,7 +258,6 @@ def shopping_delete_item(
         return RedirectResponse("/shopping", status_code=302)
 
     list_id = item.list_id
-    name = item.name
     crud.delete_item(db, item)
 
     log_activity(
@@ -227,11 +266,15 @@ def shopping_delete_item(
         action="shopping.item.deleted",
         entity_type="shopping_item",
         entity_id=item_id,
-        details={"list_id": list_id, "name": name},
+        details={"list_id": list_id},
     )
 
     return RedirectResponse(f"/shopping/{list_id}", status_code=302)
 
+
+# -------------------------
+# Archive list
+# -------------------------
 
 @router.post("/shopping/{list_id}/archive", include_in_schema=False)
 def shopping_archive_list(
@@ -258,5 +301,4 @@ def shopping_archive_list(
         details={"name": lst.name},
     )
 
-    request.session["flash"] = {"type": "success", "message": "List archived."}
     return RedirectResponse("/shopping", status_code=302)
