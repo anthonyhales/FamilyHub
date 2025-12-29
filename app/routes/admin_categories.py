@@ -6,7 +6,10 @@ from ..core.db import get_db
 from ..deps import require_admin, get_or_set_csrf, validate_csrf
 from ..routes._render import templates, ctx
 from ..crud import shopping_categories
-from ..core.activity import log_activity
+from ..crud.shopping_categories import (
+    list_categories,
+    create_category,
+)
 
 router = APIRouter(prefix="/admin/categories", tags=["admin"])
 
@@ -18,7 +21,7 @@ def categories_page(
     admin = Depends(require_admin),
 ):
     csrf = get_or_set_csrf(request)
-    categories = shopping_categories.list_categories(db, admin.household_id)
+    categories = list_categories(db, admin.household_id)
 
     return templates.TemplateResponse(
         "admin/categories.html",
@@ -38,7 +41,7 @@ def create_category(
 ):
     validate_csrf(request, csrf)
 
-    shopping_categories.create_category(
+    create_category(
         db,
         admin.household_id,
         name=name,
