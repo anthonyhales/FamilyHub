@@ -39,3 +39,5 @@ from .sessions import (
     get_session_by_token,
     delete_session,
 )
+
+from .calendar import list_upcoming_events
