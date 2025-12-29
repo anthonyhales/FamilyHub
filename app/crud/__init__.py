@@ -41,3 +41,4 @@ from .sessions import (
 )
 
 from .calendar import list_upcoming_events
+from .chores import list_chores
