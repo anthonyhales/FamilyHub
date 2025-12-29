@@ -37,5 +37,25 @@ def upsert_meal(
         )
         db.add(meal)
 
-    db.commit()
-    return meal
+def list_meals_in_range(
+    db: Session,
+    household_id: int,
+    start: date,
+    end: date,
+):
+    return (
+        db.query(models.MealPlanEntry)
+        .filter(
+            models.MealPlanEntry.household_id == household_id,
+            models.MealPlanEntry.meal_date >= start,
+            models.MealPlanEntry.meal_date <= end,
+        )
+        .order_by(
+            models.MealPlanEntry.meal_date.asc(),
+            models.MealPlanEntry.meal_slot.asc(),
+        )
+        .all()
+    )
+
+ db.commit()
+return meal
