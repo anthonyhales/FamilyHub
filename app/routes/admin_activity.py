@@ -6,6 +6,7 @@ from ..core.db import get_db
 from ..deps import get_current_user
 from ..routes._render import templates, ctx
 from .. import models
+from datetime import datetime
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -55,9 +56,17 @@ def activity_log(
 
     rows = []
     for r in raw_rows:
-        data = dict(r._mapping)
-        data["action_label"] = ACTION_LABELS.get(data["action"], data["action"])
-        rows.append(data)
+    data = dict(r._mapping)
+
+    ts = data.get("timestamp")
+    if isinstance(ts, str):
+        try:
+            data["timestamp"] = datetime.fromisoformat(ts)
+        except ValueError:
+            data["timestamp"] = None
+
+    data["action_label"] = ACTION_LABELS.get(data["action"], data["action"])
+    rows.append(data)
 
     return templates.TemplateResponse(
         "admin/activity_log.html",
