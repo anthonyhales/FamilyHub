@@ -1,11 +1,16 @@
-"""CRUD package.
-
-Important: this project previously had an app/crud.py module.
-To avoid import ambiguity, all CRUD is exposed from this package.
+"""
+CRUD package.
+This package contains all the Create, Read, Update, and Delete operations
+for the application.
 """
 
-from .households import get_household_by_name, create_household
+# households
+from .households import (
+    get_household_by_name,
+    create_household,
+)
 
+# users
 from .users import (
     get_user,
     get_user_by_email,
@@ -17,13 +22,39 @@ from .users import (
     set_user_active,
 )
 
-from .sessions import create_session, get_session_by_token, delete_session
+# sessions
+from .sessions import (
+    create_session,
+    get_session_by_token,
+    delete_session,
+)
 
-from .calendar import list_upcoming_events
-from .chores import list_chores, last_completed_on
-from .mealplan import upsert_meal, list_meals_in_range
+# calendar
+from .calendar import (
+    list_upcoming_events,
+    create_event,
+)
 
-from .shopping_categories import list_categories, create_category
+# chores
+from .chores import (
+    list_chores,
+    create_chore,
+    last_completed_on,
+)
+
+# mealplan
+from .mealplan import (
+    upsert_meal,
+    list_meals_in_range,
+)
+
+# shopping categories
+from .shopping_categories import (
+    list_categories,
+    create_category,
+)
+
+# shopping
 from .shopping import (
     list_shops,
     create_shop,
@@ -43,6 +74,7 @@ __all__ = [
     # households
     "get_household_by_name",
     "create_household",
+
     # users
     "get_user",
     "get_user_by_email",
@@ -52,20 +84,29 @@ __all__ = [
     "set_user_password",
     "set_user_admin",
     "set_user_active",
+
     # sessions
     "create_session",
     "get_session_by_token",
     "delete_session",
+
     # calendar
     "list_upcoming_events",
+    "create_event",
+
     # chores
     "list_chores",
+    "create_chore",
     "last_completed_on",
+
     # mealplan
+    "upsert_meal",
     "list_meals_in_range",
+
     # shopping categories
     "list_categories",
     "create_category",
+
     # shopping
     "list_shops",
     "create_shop",
@@ -80,4 +121,3 @@ __all__ = [
     "delete_item",
     "count_open_items",
 ]
-
