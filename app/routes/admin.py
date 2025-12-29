@@ -8,7 +8,7 @@ from ..core.db import get_db
 from ..deps import require_admin, get_or_set_csrf, validate_csrf
 from .. import crud, models
 from ._render import templates, ctx
-from app.core.activity import log_activity
+from ..core.activity import log_activity   
 
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -37,11 +37,12 @@ def create_user(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     if crud.get_user_by_email(db, email):
         request.session["flash"] = {"type": "danger", "message": "That email is already in use."}
         return RedirectResponse("/admin/users", status_code=302)
 
-    crud.create_user(
+    new_user = crud.create_user(
         db,
         household_id=admin.household_id,
         email=email,
@@ -49,6 +50,19 @@ def create_user(
         password=password,
         is_admin=bool(is_admin),
     )
+
+    log_activity(
+        db,
+        request=request,
+        action="admin.user.created",
+        entity_type="user",
+        entity_id=new_user.id,
+        details={
+            "email": new_user.email,
+            "is_admin": new_user.is_admin,
+        },
+    )
+
     request.session["flash"] = {"type": "success", "message": "User created."}
     return RedirectResponse("/admin/users", status_code=302)
 
@@ -63,10 +77,22 @@ def reset_password(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     user = crud.get_user(db, user_id)
     if not user or user.household_id != admin.household_id:
         return RedirectResponse("/admin/users", status_code=302)
+
     crud.set_user_password(db, user, password)
+
+    log_activity(
+        db,
+        request=request,
+        action="admin.user.password_reset",
+        entity_type="user",
+        entity_id=user.id,
+        details={"email": user.email},
+    )
+
     request.session["flash"] = {"type": "success", "message": "Password updated."}
     return RedirectResponse("/admin/users", status_code=302)
 
@@ -80,13 +106,30 @@ def toggle_admin(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     user = crud.get_user(db, user_id)
     if not user or user.household_id != admin.household_id:
         return RedirectResponse("/admin/users", status_code=302)
+
     if user.id == admin.id:
         request.session["flash"] = {"type": "warning", "message": "You can't remove your own admin access."}
         return RedirectResponse("/admin/users", status_code=302)
-    crud.set_user_admin(db, user, not user.is_admin)
+
+    new_state = not user.is_admin
+    crud.set_user_admin(db, user, new_state)
+
+    log_activity(
+        db,
+        request=request,
+        action="admin.user.role_changed",
+        entity_type="user",
+        entity_id=user.id,
+        details={
+            "email": user.email,
+            "is_admin": new_state,
+        },
+    )
+
     request.session["flash"] = {"type": "success", "message": "Role updated."}
     return RedirectResponse("/admin/users", status_code=302)
 
@@ -100,12 +143,29 @@ def toggle_active(
     csrf: str = Form(...),
 ):
     validate_csrf(request, csrf)
+
     user = crud.get_user(db, user_id)
     if not user or user.household_id != admin.household_id:
         return RedirectResponse("/admin/users", status_code=302)
+
     if user.id == admin.id:
         request.session["flash"] = {"type": "warning", "message": "You can't disable your own account."}
         return RedirectResponse("/admin/users", status_code=302)
-    crud.set_user_active(db, user, not user.is_active)
+
+    new_state = not user.is_active
+    crud.set_user_active(db, user, new_state)
+
+    log_activity(
+        db,
+        request=request,
+        action="admin.user.status_changed",
+        entity_type="user",
+        entity_id=user.id,
+        details={
+            "email": user.email,
+            "is_active": new_state,
+        },
+    )
+
     request.session["flash"] = {"type": "success", "message": "User status updated."}
     return RedirectResponse("/admin/users", status_code=302)
