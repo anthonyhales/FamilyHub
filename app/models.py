@@ -22,15 +22,30 @@ class Household(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
-
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    users: Mapped[list["User"]] = relationship(back_populates="household", cascade="all, delete-orphan")
+    users: Mapped[list["User"]] = relationship(
+        back_populates="household",
+        cascade="all, delete-orphan",
+    )
 
-shopping_shops: Mapped[list["ShoppingShop"]] = relationship(back_populates="household")
-shopping_lists: Mapped[list["ShoppingList"]] = relationship(back_populates="household")
-shopping_categories: Mapped[list["ShoppingCategory"]] = relationship(back_populates="household")
+    shopping_shops: Mapped[list["ShoppingShop"]] = relationship(
+        "ShoppingShop",
+        back_populates="household",
+        cascade="all, delete-orphan",
+    )
 
+    shopping_lists: Mapped[list["ShoppingList"]] = relationship(
+        "ShoppingList",
+        back_populates="household",
+        cascade="all, delete-orphan",
+    )
+
+    shopping_categories: Mapped[list["ShoppingCategory"]] = relationship(
+        "ShoppingCategory",
+        back_populates="household",
+        cascade="all, delete-orphan",
+    )
 
 class User(Base):
     __tablename__ = "users"
