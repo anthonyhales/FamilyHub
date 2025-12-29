@@ -22,6 +22,7 @@ from .sessions import create_session, get_session_by_token, delete_session
 from .calendar import list_upcoming_events
 from .chores import list_chores, last_completed_on
 from .mealplan import list_meals_in_range
+from .mealplan import upsert_meal
 
 from .shopping_categories import list_categories, create_category
 from .shopping import (
