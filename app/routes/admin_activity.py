@@ -55,7 +55,7 @@ def activity_log(
 
     rows = [
     {
-        **dict(r),
+        **r._mapping
         "action_label": ACTION_LABELS.get(r.action, r.action),
     }
     for r in rows
