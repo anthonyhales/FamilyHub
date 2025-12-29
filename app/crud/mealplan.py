@@ -11,9 +11,13 @@ def upsert_meal(
     meal_slot: str,
     title: str,
     notes: str | None,
-    user_id: int,
+    created_by_user_id: int,
 ):
-    meal = (
+    """
+    Create or update a meal plan entry for a given day + slot.
+    """
+
+    entry = (
         db.query(models.MealPlanEntry)
         .filter(
             models.MealPlanEntry.household_id == household_id,
@@ -23,22 +27,22 @@ def upsert_meal(
         .first()
     )
 
-    if meal:
-        meal.title = title
-        meal.notes = notes
+    if entry:
+        entry.title = title
+        entry.notes = notes
     else:
-        meal = models.MealPlanEntry(
+        entry = models.MealPlanEntry(
             household_id=household_id,
             meal_date=meal_date,
             meal_slot=meal_slot,
             title=title,
             notes=notes,
-            created_by_user_id=user_id,
+            created_by_user_id=created_by_user_id,
         )
-        db.add(meal)
+        db.add(entry)
 
     db.commit()
-    return meal
+    return entry
 
 
 def list_meals_in_range(
@@ -54,9 +58,6 @@ def list_meals_in_range(
             models.MealPlanEntry.meal_date >= start,
             models.MealPlanEntry.meal_date <= end,
         )
-        .order_by(
-            models.MealPlanEntry.meal_date.asc(),
-            models.MealPlanEntry.meal_slot.asc(),
-        )
+        .order_by(models.MealPlanEntry.meal_date.asc())
         .all()
     )
