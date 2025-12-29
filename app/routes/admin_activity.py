@@ -7,6 +7,21 @@ from ..deps import get_current_user
 from ..routes._render import templates, ctx
 from .. import models
 
+ACTION_LABELS = {
+    "auth.login.success": "Login successful",
+    "auth.login.failed": "Login failed",
+    "auth.login.mfa_required": "Login – MFA required",
+    "auth.mfa.success": "MFA verification successful",
+    "auth.mfa.failed": "MFA verification failed",
+    "auth.logout": "Logout",
+    "auth.mfa.enabled": "MFA enabled",
+    "auth.mfa.disabled": "MFA disabled",
+    "admin.user.created": "User created",
+    "admin.user.role_changed": "User role changed",
+    "admin.user.status_changed": "User enabled/disabled",
+    "admin.user.password_reset": "User password reset",
+}
+
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -21,19 +36,30 @@ def activity_log(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
     rows = db.execute(
-        text("""
-            SELECT
-                timestamp,
-                actor_email,
-                action,
-                entity_type,
-                entity_id,
-                details
-            FROM activity_log
-            ORDER BY timestamp DESC
-            LIMIT 500
-        """)
+    text("""
+        SELECT
+            al.timestamp,
+            al.actor_email,
+            al.action,
+            u.display_name AS target_name,
+            u.email AS target_email,
+            al.details
+        FROM activity_log al
+        LEFT JOIN users u
+            ON al.entity_type = 'user'
+           AND al.entity_id = u.id
+        ORDER BY al.timestamp DESC
+        LIMIT 500
+    """)
     ).fetchall()
+
+    rows = [
+    {
+        **dict(r),
+        "action_label": ACTION_LABELS.get(r.action, r.action),
+    }
+    for r in rows
+    ]
 
     return templates.TemplateResponse(
         "admin/activity_log.html",

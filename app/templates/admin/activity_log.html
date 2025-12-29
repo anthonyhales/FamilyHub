@@ -6,29 +6,48 @@
 
 <div class="card">
   <div class="card-body table-responsive">
-    <table class="table table-sm table-striped">
+    <table class="table table-sm table-striped align-middle">
       <thead>
         <tr>
           <th>Time</th>
-          <th>User</th>
+          <th>Actor</th>
           <th>Action</th>
-          <th>Entity</th>
+          <th>Target</th>
           <th>Details</th>
         </tr>
       </thead>
       <tbody>
         {% for r in rows %}
         <tr>
-          <td>{{ r.timestamp }}</td>
-          <td>{{ r.actor_email or "system" }}</td>
-          <td><code>{{ r.action }}</code></td>
           <td>
-            {% if r.entity_type %}
-              {{ r.entity_type }} {{ r.entity_id }}
+            {% if r.timestamp %}
+              {{ r.timestamp.strftime("%d %b %Y, %H:%M") }}
             {% else %}
               —
             {% endif %}
           </td>
+
+          <td>
+            {% if r.actor_email %}
+              {{ r.actor_email }}
+            {% else %}
+              <span class="text-muted">System</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {{ r.action_label }}
+          </td>
+
+          <td>
+            {% if r.target_name %}
+              {{ r.target_name }}<br>
+              <span class="text-muted small">{{ r.target_email }}</span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
           <td>
             {% if r.details %}
               <pre class="mb-0 small">{{ r.details }}</pre>
