@@ -11,7 +11,7 @@ def upsert_meal(
     meal_slot: str,
     title: str,
     notes: str | None,
-    created_by_user_id: int,
+    user_id: int,
 ):
     meal = (
         db.query(models.MealPlanEntry)
@@ -33,9 +33,13 @@ def upsert_meal(
             meal_slot=meal_slot,
             title=title,
             notes=notes,
-            created_by_user_id=created_by_user_id,
+            created_by_user_id=user_id,
         )
         db.add(meal)
+
+    db.commit()
+    return meal
+
 
 def list_meals_in_range(
     db: Session,
@@ -56,6 +60,3 @@ def list_meals_in_range(
         )
         .all()
     )
-
- db.commit()
-return meal
