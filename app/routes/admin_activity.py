@@ -54,8 +54,8 @@ def activity_log(
         """)
     ).fetchall()
 
-    rows = []
-    for r in raw_rows:
+rows = []
+for r in raw_rows:
     data = dict(r._mapping)
 
     ts = data.get("timestamp")
