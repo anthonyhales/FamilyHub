@@ -33,3 +33,9 @@ __all__ = [
     "list_categories",
     "create_category",
 ]
+
+from .sessions import (
+    create_session,
+    get_session_by_token,
+    delete_session,
+)
