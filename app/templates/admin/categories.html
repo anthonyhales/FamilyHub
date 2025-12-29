@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% set title = "Shopping Categories" %}
+
+{% block content %}
+<h1 class="h3 mb-4">Shopping Categories</h1>
+
+<form method="post" action="/admin/categories/create" class="mb-4">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+
+  <div class="row g-2">
+    <div class="col">
+      <input class="form-control" name="name" placeholder="Category name" required>
+    </div>
+    <div class="col">
+      <input class="form-control" name="icon" placeholder="Emoji (🍎)">
+    </div>
+    <div class="col">
+      <input class="form-control" name="color" placeholder="Bootstrap color (success)">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary">Add</button>
+    </div>
+  </div>
+</form>
+
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Preview</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in categories %}
+    <tr>
+      <td>{{ c.name }}</td>
+      <td>
+        <span class="badge bg-{{ c.color or 'secondary' }}">
+          {{ c.icon }} {{ c.name }}
+        </span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

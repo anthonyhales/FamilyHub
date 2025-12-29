@@ -1,0 +1,24 @@
+CREATE TABLE IF NOT EXISTS shopping_shops (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    household_id INTEGER NOT NULL,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shopping_lists (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    household_id INTEGER NOT NULL,
+    shop_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    is_archived INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shopping_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    list_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    is_checked INTEGER NOT NULL DEFAULT 0,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    category_id INTEGER,
+    created_at DATETIME NOT NULL
+);
