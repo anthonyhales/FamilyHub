@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 from ..core.db import get_db
 from ..deps import require_admin, get_or_set_csrf, validate_csrf
 from ..routes._render import templates, ctx
-from ..crud import shopping_categories
 from ..crud.shopping_categories import (
     list_categories,
-    create_category,
+    create_category as create_category_crud,
 )
+from ..core.activity import log_activity
 
 router = APIRouter(prefix="/admin/categories", tags=["admin"])
 
@@ -30,7 +30,7 @@ def categories_page(
 
 
 @router.post("/create", include_in_schema=False)
-def create_category(
+def create_category_post(
     request: Request,
     db: Session = Depends(get_db),
     admin = Depends(require_admin),
@@ -41,7 +41,7 @@ def create_category(
 ):
     validate_csrf(request, csrf)
 
-    create_category(
+    create_category_crud(
         db,
         admin.household_id,
         name=name,
