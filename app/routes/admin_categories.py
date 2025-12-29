@@ -1,39 +1,52 @@
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
-from ..core.db import get_db
-from ..deps import require_admin, get_or_set_csrf, validate_csrf
-from ..routes._render import templates, ctx
-from ..crud.shopping_categories import (
-    list_categories,
-    create_category as create_category_crud,
-)
-from ..core.activity import log_activity
+from app.core.db import get_db
+from app.core.config import settings
+from app.deps import require_admin, get_or_set_csrf, validate_csrf
+from app.core.activity import log_activity
+from app.routes._render import templates, ctx
+from app.crud.shopping_categories import list_categories, create_category
 
 router = APIRouter(prefix="/admin/categories", tags=["admin"])
+
+
+def _set_csrf_cookie_if_needed(request: Request, resp):
+    token = getattr(request.state, "set_csrf", None)
+    if token:
+        resp.set_cookie(
+            settings.csrf_cookie,
+            token,
+            httponly=False,
+            samesite="lax",
+            secure=False,
+        )
+    return resp
 
 
 @router.get("", include_in_schema=False)
 def categories_page(
     request: Request,
     db: Session = Depends(get_db),
-    admin = Depends(require_admin),
+    admin=Depends(require_admin),
 ):
     csrf = get_or_set_csrf(request)
     categories = list_categories(db, admin.household_id)
-
-    return templates.TemplateResponse(
+    resp = templates.TemplateResponse(
         "admin/categories.html",
         ctx(request, csrf=csrf, categories=categories),
     )
+    return _set_csrf_cookie_if_needed(request, resp)
 
 
 @router.post("/create", include_in_schema=False)
-def create_category_post(
+def categories_create(
     request: Request,
     db: Session = Depends(get_db),
-    admin = Depends(require_admin),
+    admin=Depends(require_admin),
     name: str = Form(...),
     color: str = Form(""),
     icon: str = Form(""),
@@ -41,12 +54,12 @@ def create_category_post(
 ):
     validate_csrf(request, csrf)
 
-    create_category_crud(
+    cat_id = create_category(
         db,
         admin.household_id,
-        name=name,
-        color=color or None,
-        icon=icon or None,
+        name=name.strip(),
+        color=(color or None),
+        icon=(icon or None),
     )
 
     log_activity(
@@ -54,7 +67,9 @@ def create_category_post(
         request=request,
         action="shopping.category.created",
         entity_type="shopping_category",
-        details={"name": name},
+        entity_id=cat_id,
+        details={"name": name.strip()},
     )
 
+    request.session["flash"] = {"type": "success", "message": "Category added."}
     return RedirectResponse("/admin/categories", status_code=302)

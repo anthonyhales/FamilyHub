@@ -10,7 +10,7 @@ from .core.config import settings
 from .core.db import engine, SessionLocal
 from .core.security import hash_password
 from . import models, crud
-from .routes import auth, dashboard, calendar, chores, mealplan, admin
+from .routes import auth, dashboard, calendar, chores, mealplan, admin, shopping
 from app.core.migrations import run_migrations
 from .routes import admin_activity
 from .routes import admin_categories
@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
     app.include_router(chores.router)
     app.include_router(mealplan.router)
     app.include_router(admin.router)
+    app.include_router(shopping.router)
     app.include_router(admin_activity.router)
     app.include_router(admin_categories.router)
 

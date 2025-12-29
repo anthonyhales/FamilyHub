@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% set title = "Shopping Lists" %}
+
+{% block content %}
+<h1 class="h3 mb-4">Shopping Lists</h1>
+
+<div class="row">
+  <div class="col-lg-5">
+    <div class="card mb-4">
+      <div class="card-header">Create a new list</div>
+      <div class="card-body">
+        <form method="post" action="/shopping/list/create">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <div class="mb-3">
+            <label class="form-label">Shop</label>
+            <select class="form-control" name="shop_id" required>
+              {% for s in shops %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Add more shops below.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">List name</label>
+            <input class="form-control" name="name" placeholder="Weekly shop" required>
+          </div>
+          <button class="btn btn-primary" type="submit">Create list</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Shops</div>
+      <div class="card-body">
+        <form method="post" action="/shopping/shop/create" class="d-flex gap-2">
+          <input type="hidden" name="csrf" value="{{ csrf }}">
+          <input class="form-control" name="name" placeholder="e.g. Tesco" required>
+          <button class="btn btn-outline-primary" type="submit">Add</button>
+        </form>
+        <hr>
+        <ul class="mb-0">
+          {% for s in shops %}
+            <li>{{ s.name }}</li>
+          {% else %}
+            <li class="text-muted">No shops yet. Add one above.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">Active lists</div>
+      <div class="card-body table-responsive">
+        <table class="table table-sm table-striped align-middle">
+          <thead>
+            <tr>
+              <th>List</th>
+              <th>Shop</th>
+              <th>Open</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for l in lists %}
+            <tr>
+              <td><a href="/shopping/{{ l.id }}">{{ l.name }}</a></td>
+              <td>{{ l.shop_name }}</td>
+              <td><span class="badge bg-secondary">{{ l.open_count }}</span></td>
+              <td>{{ l.created_at.strftime("%d %b %Y") if l.created_at else "" }}</td>
+              <td class="text-end">
+                <a class="btn btn-sm btn-outline-primary" href="/shopping/{{ l.id }}">Open</a>
+              </td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-muted">No lists yet. Create one on the left.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

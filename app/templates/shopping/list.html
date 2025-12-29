@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set title = "Shopping List" %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h1 class="h3 mb-0">{{ lst.name }}</h1>
+    <div class="text-muted small">
+      Shop: {{ lst.shop.name if lst.shop else "" }}
+    </div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="/shopping">Back</a>
+    <form method="post" action="/shopping/{{ lst.id }}/archive">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="btn btn-outline-danger" type="submit">Archive</button>
+    </form>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header">Add item</div>
+  <div class="card-body">
+    <form method="post" action="/shopping/{{ lst.id }}/item/add" class="row g-2">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="col-md-6">
+        <label class="form-label">Item</label>
+        <input class="form-control" name="name" placeholder="Milk" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Qty</label>
+        <input class="form-control" type="number" name="quantity" value="1" min="1">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Category</label>
+        <select class="form-control" name="category_id">
+          <option value="">Uncategorised</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-primary" type="submit">Add</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% for cat, items_in_cat in by_cat.items() %}
+  <div class="card mb-3">
+    <div class="card-header">{{ cat }}</div>
+    <div class="card-body table-responsive">
+      <table class="table table-sm table-striped align-middle mb-0">
+        <thead>
+          <tr>
+            <th style="width: 40px;"></th>
+            <th>Item</th>
+            <th style="width: 80px;">Qty</th>
+            <th style="width: 90px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for it in items_in_cat %}
+          <tr class="{% if it.is_checked %}text-muted{% endif %}">
+            <td>
+              <form method="post" action="/shopping/item/{{ it.id }}/toggle">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button class="btn btn-sm btn-outline-secondary" type="submit">
+                  {% if it.is_checked %}✓{% else %}&nbsp;{% endif %}
+                </button>
+              </form>
+            </td>
+            <td>
+              {% if it.is_checked %}<s>{{ it.name }}</s>{% else %}{{ it.name }}{% endif %}
+            </td>
+            <td>{{ it.quantity }}</td>
+            <td class="text-end">
+              <form method="post" action="/shopping/item/{{ it.id }}/delete" onsubmit="return confirm('Delete this item?')">
+                <input type="hidden" name="csrf" value="{{ csrf }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+
+{% if not items %}
+  <div class="text-muted">No items yet. Add your first item above.</div>
+{% endif %}
+{% endblock %}

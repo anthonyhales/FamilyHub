@@ -27,6 +27,10 @@ class Household(Base):
 
     users: Mapped[list["User"]] = relationship(back_populates="household", cascade="all, delete-orphan")
 
+shopping_shops: Mapped[list["ShoppingShop"]] = relationship(back_populates="household")
+shopping_lists: Mapped[list["ShoppingList"]] = relationship(back_populates="household")
+shopping_categories: Mapped[list["ShoppingCategory"]] = relationship(back_populates="household")
+
 
 class User(Base):
     __tablename__ = "users"
@@ -136,3 +140,56 @@ class MealPlanEntry(Base):
         UniqueConstraint("household_id", "meal_date", "meal_slot", name="uq_meal_slot"),
         Index("ix_meal_household_date", "household_id", "meal_date"),
     )
+
+
+class ShoppingShop(Base):
+    __tablename__ = "shopping_shops"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+
+    household: Mapped["Household"] = relationship(back_populates="shopping_shops")
+    lists: Mapped[list["ShoppingList"]] = relationship(back_populates="shop", cascade="all, delete-orphan")
+
+
+class ShoppingCategory(Base):
+    __tablename__ = "shopping_categories"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    color: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    icon: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+    household: Mapped["Household"] = relationship(back_populates="shopping_categories")
+
+
+class ShoppingList(Base):
+    __tablename__ = "shopping_lists"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    household_id: Mapped[int] = mapped_column(ForeignKey("households.id"), index=True)
+    shop_id: Mapped[int] = mapped_column(ForeignKey("shopping_shops.id"), index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    is_archived: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    household: Mapped["Household"] = relationship(back_populates="shopping_lists")
+    shop: Mapped["ShoppingShop"] = relationship(back_populates="lists")
+    items: Mapped[list["ShoppingItem"]] = relationship(back_populates="shopping_list", cascade="all, delete-orphan")
+
+
+class ShoppingItem(Base):
+    __tablename__ = "shopping_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    list_id: Mapped[int] = mapped_column(ForeignKey("shopping_lists.id"), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    is_checked: Mapped[bool] = mapped_column(Boolean, default=False)
+    quantity: Mapped[int] = mapped_column(Integer, default=1)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("shopping_categories.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    shopping_list: Mapped["ShoppingList"] = relationship(back_populates="items")
+    category: Mapped["ShoppingCategory"] = relationship()
