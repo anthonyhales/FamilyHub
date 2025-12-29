@@ -7,6 +7,9 @@ from ..deps import get_current_user
 from ..routes._render import templates, ctx
 from .. import models
 
+router = APIRouter(prefix="/admin", tags=["admin"])
+
+
 ACTION_LABELS = {
     "auth.login.success": "Login successful",
     "auth.login.failed": "Login failed",
@@ -18,11 +21,9 @@ ACTION_LABELS = {
     "auth.mfa.disabled": "MFA disabled",
     "admin.user.created": "User created",
     "admin.user.role_changed": "User role changed",
-    "admin.user.status_changed": "User enabled/disabled",
+    "admin.user.status_changed": "User enabled / disabled",
     "admin.user.password_reset": "User password reset",
 }
-
-router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/activity", include_in_schema=False)
@@ -31,35 +32,32 @@ def activity_log(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Enforce admin access
     if not user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    rows = db.execute(
-    text("""
-        SELECT
-            al.timestamp,
-            al.actor_email,
-            al.action,
-            u.display_name AS target_name,
-            u.email AS target_email,
-            al.details
-        FROM activity_log al
-        LEFT JOIN users u
-            ON al.entity_type = 'user'
-           AND al.entity_id = u.id
-        ORDER BY al.timestamp DESC
-        LIMIT 500
-    """)
+    raw_rows = db.execute(
+        text("""
+            SELECT
+                al.timestamp,
+                al.actor_email,
+                al.action,
+                u.display_name AS target_name,
+                u.email AS target_email,
+                al.details
+            FROM activity_log al
+            LEFT JOIN users u
+                ON al.entity_type = 'user'
+               AND al.entity_id = u.id
+            ORDER BY al.timestamp DESC
+            LIMIT 500
+        """)
     ).fetchall()
 
-    rows = [
-    {
-        **r._mapping
-        "action_label": ACTION_LABELS.get(r.action, r.action),
-    }
-    for r in rows
-    ]
+    rows = []
+    for r in raw_rows:
+        data = dict(r._mapping)
+        data["action_label"] = ACTION_LABELS.get(data["action"], data["action"])
+        rows.append(data)
 
     return templates.TemplateResponse(
         "admin/activity_log.html",
