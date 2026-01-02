@@ -1,4 +1,4 @@
-# FamilyHub v1 (Grocy-style family organiser)
+# FamilyHub (family organiser)
 
 A small self-hosted app for your household with:
 
@@ -11,13 +11,12 @@ A small self-hosted app for your household with:
 Tech:
 - FastAPI + Jinja2 templates
 - SQLAlchemy + SQLite (v1)
-- SB Admin 2 layout (drop your SB Admin 2 files into `app/static/sbadmin2/`)
+- SB Admin 2 layout
 
 ## Deploy with Portainer (Docker Compose)
 
-1. Put this repo in GitHub.
-2. In Portainer, create a new Stack and paste `docker-compose.yml`.
-3. Change env vars:
+1. In Portainer, create a new Stack and paste `docker-compose.yml`.
+2. Change env vars:
    - `SECRET_KEY` (random long string)
    - `BOOTSTRAP_ADMIN_EMAIL`
    - `BOOTSTRAP_ADMIN_PASSWORD`
