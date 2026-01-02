@@ -53,3 +53,5 @@ This is version 1. Next sensible steps:
 - meal plan recipes + shopping list
 - multi-household support + invite flow
 - email sending (password reset) once you want it
+
+There are elements of vibe coding within this project.
