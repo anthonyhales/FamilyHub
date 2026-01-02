@@ -13,7 +13,7 @@ services:
     volumes:
       - familyhub_data:/app/data
     ports:
-      - "8085:8000"
+      - "8085:8085"
 
 volumes:
   familyhub_data:
